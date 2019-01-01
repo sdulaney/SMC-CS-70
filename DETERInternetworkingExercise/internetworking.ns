@@ -1,0 +1,56 @@
+#Content-Disposition: attachment; filename="FileName"
+set ns [new Simulator] 
+source tb_compat.tcl
+
+#Nodes
+set NWrouter [$ns node]
+tb-set-node-os $NWrouter Ubuntu-EDU
+
+set NWworkstation1 [$ns node]
+tb-set-node-os $NWworkstation1 Ubuntu-EDU
+
+set SWrouter [$ns node]
+tb-set-node-os $SWrouter Ubuntu-EDU
+
+set SWworkstation1 [$ns node]
+tb-set-node-os $SWworkstation1 Ubuntu-EDU
+
+set ISrouter [$ns node]
+tb-set-node-os $ISrouter Ubuntu-EDU
+
+
+#Lans
+set lanNW [$ns make-lan "NWrouter NWworkstation1" 100000.0kb 0.0ms]
+set lanSW [$ns make-lan "SWrouter SWworkstation1" 100000.0kb 0.0ms]
+
+# Links
+set linkNWpublic [$ns duplex-link NWrouter ISrouter 100000.0kb 0.0ms DropTail]
+set linkSWpublic [$ns duplex-link SWrouter ISrouter 100000.0kb 0.0ms DropTail]
+
+tb-set-ip-lan $NWworkstation1 $lanNW 11.0.0.1
+
+tb-set-ip-lan $NWrouter $lanNW 11.0.0.1
+tb-set-ip-link $NWrouter $linkNWpublic 22.0.0.2 
+
+tb-set-ip-link $ISrouter $linkNWpublic 22.0.0.1
+tb-set-ip-link $ISrouter $linkSWpublic 33.0.0.2 
+
+tb-set-ip-link $SWrouter $linkSWpublic 33.0.0.2 
+tb-set-ip-lan $SWrouter $lanSW 44.0.0.1
+
+tb-set-ip-lan $SWworkstation1 $lanSW 44.0.0.1
+
+
+# record address-interface matchups in /tmp/nicaddressing.dat on each node
+# then strip off addresses to leave a clean slate for students to apply their own
+# (script "showcabling" on users.isi.deterlab.net will later be consumer of /tmp/nicaddressing.dat files
+# reading them all and producing a global interface map what-is-cabled-to-what
+tb-set-node-startcmd $ISrouter "/proj/SMC-CS70/deaddress"
+tb-set-node-startcmd $NWrouter "/proj/SMC-CS70/deaddress"
+tb-set-node-startcmd $NWworkstation1 "/proj/SMC-CS70/deaddress"
+tb-set-node-startcmd $SWrouter "/proj/SMC-CS70/deaddress"
+tb-set-node-startcmd $SWworkstation1 "/proj/SMC-CS70/deaddress"
+
+
+$ns rtproto Static 
+$ns run
